@@ -9,8 +9,8 @@ class Proces:
         self.moment_zgloszenia = 0
         self.czas_oczekiwania_na_rozpoczecie = None
         self.wszystkie_czasy_oczekiwania = []
-        self.czas_pozostaly_do_konca_realizacji = None
-        self.czas_pozostaly_do_poczatku_realizacji = None
+        self.czas_pozostaly_do_konca_realizacji = dlugosc_fazy_procesora
+        self.czas_trwania_realizacji = None
 
     def zglos(self, moment_zgloszenia):
         self.moment_zgloszenia = moment_zgloszenia
@@ -33,6 +33,8 @@ class Proces:
         return f'{"{"}Numer procesu: {self.numer}\n\tDlugosc fazy procesora: {self.dlugosc_fazy_procesora}\n' \
                f'\tMoment zgloszenia: {self.moment_zgloszenia}\n' \
                f'\tCzas oczekiwania na rozpoczecie: {self.czas_oczekiwania_na_rozpoczecie}\n' \
+               f'\tCzas trwania realizacji: {self.czas_trwania_realizacji}\n' \
+               f'\tCzas pozostaly do konca realizacji: {self.czas_pozostaly_do_konca_realizacji}\n' \
                f'\tStatus: {self.status}{"}"}\n'
 
     def __eq__(self, other):

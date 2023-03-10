@@ -29,20 +29,20 @@ class Procesor:
 
     @property
     def aktualnie_wykonywany(self) -> Proces:
-        return self.aktualnie_wykonywany
+        return self.__aktualnie_wykonywany
 
     @aktualnie_wykonywany.setter
     def aktualnie_wykonywany(self, aktualnie_wykonywany: Proces):
-        self.aktualnie_wykonywany = aktualnie_wykonywany
+        self.__aktualnie_wykonywany = aktualnie_wykonywany
 
     def dodaj_proces(self, proces: Proces):
         proces.zglos(self.czas_dzialania)
         self.kolejka.append(proces)
 
-    def usun_proces_zakonczony(self, proces: Proces):
-        self.kolejka.remove(proces)
-        proces.status = "zakonczony"
-        self.procesy_wykonane.append(proces)
+    def proces_zakonczony(self):
+        self.aktualnie_wykonywany.status = "zakonczony"
+        self.procesy_wykonane.append(self.aktualnie_wykonywany)
+        self.aktualnie_wykonywany = None
 
 
     def wyczysc_kolejke(self):
@@ -61,16 +61,23 @@ class Procesor:
 
     def wykonaj_jednostke_czasu(self):
         self.czas_dzialania += self.delta_t
+        print(f'Mija {self.delta_t} jednostek czasu')
         if self.aktualnie_wykonywany is None:
-            self.aktualnie_wykonywany = self.algorytm_kolejkowania.wybierz_nastepny_proces(self.kolejka)
-            print(self.aktualnie_wykonywany)
-        # else:
-        #     self.algorytm_kolejkowania
+            self.aktualnie_wykonywany = self.algorytm_kolejkowania().wybierz_nastepny_proces(self.kolejka)
+            self.aktualnie_wykonywany.status = "wykonywanny"
+            self.aktualnie_wykonywany.czas_trwania_realizacji = 0
+            self.aktualnie_wykonywany.czas_oczekiwania_na_rozpoczecie = self.czas_dzialania - self.aktualnie_wykonywany.moment_zgloszenia
+
+        self.aktualnie_wykonywany.czas_pozostaly_do_konca_realizacji = self.aktualnie_wykonywany.dlugosc_fazy_procesora - self.aktualnie_wykonywany.czas_trwania_realizacji
+        self.aktualnie_wykonywany.czas_trwania_realizacji += self.delta_t
+        if self.aktualnie_wykonywany.czas_pozostaly_do_konca_realizacji == 0:
+            self.proces_zakonczony()
 
 
 
     def __repr__(self):
-        return (f'Aktualna kolejka: {self.kolejka}\n'
+        return (f'Aktualnie wykonywany proces: {self.aktualnie_wykonywany}\n' 
+                f'Aktualna kolejka: {self.kolejka}\n'
                 f'Aktualna dlugosc kolejki: {len(self.kolejka)}\n'
                 f'Aktualny algorytm kolejkowania: {self.__algorytm_kolejkowania()}\n'
                 f'Czas dzialania procesora: {self.czas_dzialania}')
