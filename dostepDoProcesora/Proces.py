@@ -10,7 +10,7 @@ class Proces:
         self.czas_oczekiwania_na_rozpoczecie = None
         self.wszystkie_czasy_oczekiwania = []
         self.czas_pozostaly_do_konca_realizacji = dlugosc_fazy_procesora
-        self.czas_trwania_realizacji = None
+        self.czas_trwania_realizacji = 0
 
     def zglos(self, moment_zgloszenia):
         self.moment_zgloszenia = moment_zgloszenia
@@ -42,6 +42,6 @@ class Proces:
             return (self.numer, self.dlugosc_fazy_procesora, self.status, self.moment_zgloszenia,
                     self.czas_oczekiwania_na_rozpoczecie) == (
                        other.numer, other.dlugosc_fazy_procesora, other.status, other.moment_zgloszenia,
-                       other.czas_oczekiwania)
+                       other.czas_oczekiwania_na_rozpoczecie)
         else:
             return NotImplemented
