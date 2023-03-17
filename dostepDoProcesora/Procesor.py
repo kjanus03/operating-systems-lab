@@ -44,6 +44,7 @@ class Procesor:
     def proces_zakonczony(self):
         self.aktualnie_wykonywany.status = "zakonczony"
         self.procesy_wykonane.append(self.aktualnie_wykonywany)
+        self.kolejka.remove(self.aktualnie_wykonywany)
         self.aktualnie_wykonywany = None
         self.liczba_obsl_zadan += 1
         self.wydajnosc = self.liczba_obsl_zadan / self.czas_dzialania
@@ -54,29 +55,31 @@ class Procesor:
     def wyswietl_procesy_wykonane(self):
         print(self.procesy_wykonane)
 
-    def przetworz_kolejke_jednokrotnie(self):
-        print("Przetwarzam kolejke...")
-        proces = self.algorytm_kolejkowania().wybierz_nastepny_proces(kolejka=self.kolejka)
-        proces.status = "wykonywany"
-        proces.czas_oczekiwania = self.czas_dzialania - proces.moment_zgloszenia
-        self.czas_dzialania += proces.dlugosc_fazy_procesora
-        self.proces_zakonczony()
-
-    def wykonaj_jednostke_czasu(self):
-        self.czas_dzialania += self.delta_t
-        print(f'Mija {self.delta_t} jednostek czasu')
-
-        if self.aktualnie_wykonywany is None and self.kolejka:
-            self.aktualnie_wykonywany = self.algorytm_kolejkowania().wybierz_nastepny_proces(self.kolejka)
+    def wybierz_proces(self):
+        poprzedni = self.aktualnie_wykonywany
+        self.aktualnie_wykonywany = self.algorytm_kolejkowania().wybierz_nastepny_proces(self.kolejka)
+        if self.aktualnie_wykonywany != poprzedni:
             self.zmiany_zadan += 1
             self.aktualnie_wykonywany.status = "wykonywanny"
             self.aktualnie_wykonywany.czas_trwania_realizacji += 1
             self.aktualnie_wykonywany.czas_oczekiwania_na_rozpoczecie = self.czas_dzialania - self.aktualnie_wykonywany.moment_zgloszenia
 
+    def wykonaj_jednostke_czasu(self):
+        self.czas_dzialania += self.delta_t
+        print(f'Mija {self.delta_t} jednostek czasu \n')
+        if self.aktualnie_wykonywany is None and self.kolejka:
+            self.wybierz_proces()
+
         self.aktualnie_wykonywany.czas_pozostaly_do_konca_realizacji = self.aktualnie_wykonywany.dlugosc_fazy_procesora - self.aktualnie_wykonywany.czas_trwania_realizacji
         self.aktualnie_wykonywany.czas_trwania_realizacji += self.delta_t
+
         if self.aktualnie_wykonywany.czas_pozostaly_do_konca_realizacji == 0:
+            print(self.aktualnie_wykonywany)
+            print(self.kolejka)
             self.proces_zakonczony()
+
+        if self.algorytm_kolejkowania.zmiana_procesu_w_trakcie_trwania_innego:
+            self.wybierz_proces()
 
     def __repr__(self):
         return (f'Aktualnie wykonywany proces: {self.aktualnie_wykonywany}\n'

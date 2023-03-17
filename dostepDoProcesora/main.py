@@ -4,6 +4,7 @@ from Proces import Proces
 from Procesor import Procesor
 from StrategieAlgorytmy.FCFS import FCFS
 from StrategieAlgorytmy.SJF import SJF
+from StrategieAlgorytmy.SJF_wyw import SJF_wyw
 
 
 def main():
@@ -11,7 +12,7 @@ def main():
     # kazdy algorytm powinien przeanalizowac dokladnie te same procesy
     # rozklad czasow procesow?
     procesy = [Proces(1, 5), Proces(2, 4), Proces(3, 7), Proces(4, 1), Proces(5, 6)]
-    procesor = Procesor(SJF, procesy)
+    procesor = Procesor(FCFS, procesy)
     for i in range(100):
         procesor.wykonaj_jednostke_czasu()
         if procesor.kolejka == [] and procesor.aktualnie_wykonywany is None:
@@ -27,3 +28,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+

@@ -4,6 +4,10 @@ from typing import List
 
 
 class Strategia(ABC):
+    @property
+    @abstractmethod
+    def zmiana_procesu_w_trakcie_trwania_innego(self) ->bool:
+        raise NotImplementedError
     @abstractmethod
     def wybierz_nastepny_proces(self, kolejka: List[Proces]) -> Proces:
         pass

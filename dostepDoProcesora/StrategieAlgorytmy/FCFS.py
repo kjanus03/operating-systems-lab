@@ -2,10 +2,12 @@ from StrategieAlgorytmy.Strategia import Strategia
 
 
 class FCFS(Strategia):
+
+    def zmiana_procesu_w_trakcie_trwania_innego(self) ->bool:
+        return False
     def wybierz_nastepny_proces(self, kolejka):
         if kolejka:
             proces = kolejka[0]
-            kolejka.remove(proces)
             return proces
         else:
             return None
