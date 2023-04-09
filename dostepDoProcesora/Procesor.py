@@ -12,7 +12,7 @@ class Procesor:
             kolejka = []
         self.kolejka = kolejka
         self.__algorytm_kolejkowania = algorytm_kolejkowania()
-        self.__aktualnie_wykonywany = None
+        self._aktualnie_wykonywany = None
         # kolejka procesow oczekujacych
         self.czas_dzialania = 0
         self.procesy_wykonane = []
@@ -31,11 +31,11 @@ class Procesor:
 
     @property
     def aktualnie_wykonywany(self) -> Proces:
-        return self.__aktualnie_wykonywany
+        return self._aktualnie_wykonywany
 
     @aktualnie_wykonywany.setter
     def aktualnie_wykonywany(self, aktualnie_wykonywany: Proces):
-        self.__aktualnie_wykonywany = aktualnie_wykonywany
+        self._aktualnie_wykonywany = aktualnie_wykonywany
 
     def dodaj_proces(self, proces: Proces):
         proces.zglos(self.czas_dzialania)
@@ -59,8 +59,7 @@ class Procesor:
 
     def wybierz_proces(self):
         poprzedni = self.aktualnie_wykonywany
-        self.aktualnie_wykonywany = self.algorytm_kolejkowania.wybierz_nastepny_proces(self.kolejka,
-                                                                                       self.czas_dzialania)
+        self.aktualnie_wykonywany = self.algorytm_kolejkowania.wybierz_nastepny_proces(self.kolejka, self.czas_dzialania)
         if self.aktualnie_wykonywany != poprzedni:
             self.zmiany_zadan += 1
             if (self.aktualnie_wykonywany.status == "nowy"):

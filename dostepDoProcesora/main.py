@@ -41,7 +41,7 @@ def main():
     # zadan powinno byc duzo, setki tysiecy do miliona
     # kazdy algorytm powinien przeanalizowac dokladnie te same procesy
     # rozklad czasow procesow?
-    random.seed(42)
+    random.seed(45)
     liczba_procesow, max_czas, max_moment_zgloszenia = 400, 34, 1200
     procesy = generuj_procesy(liczba_procesow, max_czas, max_moment_zgloszenia)
     algorytmy = [FCFS, SJF, SJF_wyw]
@@ -52,11 +52,12 @@ def main():
     liczby_przelaczen = []
     for i, alg in enumerate(algorytmy):
         procesor = Procesor(alg, listy_procesow[i])
-        limit_czasu = 4300
-        for i in range(limit_czasu):
+        limit_czasu = 4000000
+        for i2 in range(limit_czasu):
             procesor.wykonaj_jednostke_czasu()
-            if (procesor.kolejka == [] and procesor.aktualnie_wykonywany is None) or i == limit_czasu - 1:
+            if (procesor.kolejka == [] and procesor.aktualnie_wykonywany is None) or i2 == limit_czasu - 1:
                 print(f'\nKoniec symulacji dla algorytmu {alg}')
+                print(f'Liczba wykonanych zadan: {len(procesor.procesy_wykonane)}')
                 print(f'Liczba przelaczen: {procesor.zmiany_zadan}')
                 liczby_przelaczen.append(procesor.zmiany_zadan)
                 print(
@@ -74,6 +75,7 @@ def main():
         procesor.wykonaj_jednostke_czasu_RR()
         if (procesor.kolejka == [] and procesor.aktualnie_wykonywany is None) or i == limit_czasu - 1:
             print(f'\nKoniec symulacji dla algorytmu {RR}')
+            print(f'Liczba wykonanych zadan: {len(procesor.procesy_wykonane)}')
             print(f'Liczba przelaczen: {procesor.zmiany_zadan}')
             liczby_przelaczen.append(procesor.zmiany_zadan)
             print(
@@ -88,7 +90,8 @@ def main():
 
     # Analiza wynikow
     wykonane_fcfs, wykonane_sjf, wykonane_sjf_wyw, wykonane_rr = lista_wykonanych
-    print(wykonane_sjf[3:12])
+    print(wykonane_fcfs[:12])
+    print(wykonane_rr[:12])
     czasy_oczekiwania, czasy_wykonania, labels = [], [], []
     for cls in wykonane_fcfs:
         czasy_oczekiwania.append(cls.czas_oczekiwania_na_rozpoczecie)
