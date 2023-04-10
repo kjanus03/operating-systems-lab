@@ -19,3 +19,6 @@ class Request:
     def __ge__(self, other):
         return self.position >= other.position
 
+    def __repr__(self):
+        return f'Position: {self.position}\nArrival time: {self.arrival_time}\nReal time: {self.real_time}\n'
+

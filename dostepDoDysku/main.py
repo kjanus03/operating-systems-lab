@@ -1,75 +1,103 @@
+from pprint import pprint
 from typing import List
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+import warnings
 
 from DiskScheduler import DiskScheduler
 from Request import Request
+from RequestGenerator import RequestGenerator
 
 
 def adjust_seaborn(style: str):
     sns.set_style(style)
+    sns.color_palette("pastel")
 
 
 def plot_values(*value_lists: List[int]):
     plot_names = ["FCFS", "SSTF", "SCAN", "C-SCAN"]
     plt.figure(figsize=(16, 12))
+    plt.title(f'Comparison of request scheduling algorithms for {len(value_lists[3])} requests')
     for i, values in enumerate(value_lists):
         ax = plt.subplot(2, 2, i + 1)
-        sns.scatterplot(values, range(len(values) - 1, -1, -1))
+        sns.scatterplot(values, range(len(values) - 1, -1, -1), s=200)
 
-        # Plotting the arrows
-        # for j in range(len(values) - 1, 0, -1):
-        #     ind = abs(len(values) - j) - 1
-        #
-        #     # Offsetting the arrow so that it doesn't overlap with the dot indicating the data point
-        #     arrow_head_length = 1
-        #     arrow_x_offset = 0.5 + arrow_head_length
-        #
-        #     # Arrow coordinates
-        #     arrow_x = values[ind]
-        #     arrow_y = j
-        #     dx = values[ind + 1] - values[ind]
-        #     dy = -1
-        #     if dx < 0:
-        #         dx += arrow_x_offset
-        #     else:
-        #         dx -= arrow_x_offset
-        #
-        #     plt.arrow(arrow_x, arrow_y, dx, dy, head_width=0.2, head_length=arrow_head_length,
-        #               fc='k', ec='k')
-
+        warnings.simplefilter(action='ignore', category=FutureWarning)
         for j in range(len(values) - 1):
             ind = abs(len(values) - j) - 2
             dy = -1  # adjust this value to set the vertical distance of the line
             line_x = [values[ind], values[ind + 1]]
             line_y = [j + 1, j + 1 + dy]
-            plt.plot(line_x, line_y, color='black', linewidth=1)
+            ax.plot(line_x, line_y, color='black', linewidth=1)
 
-        plt.title(plot_names[i])
-        plt.xlabel("Request position")
-        plt.ylabel("Order of execution")
+        ax.set_title(plot_names[i])
+        ax.set_xlabel("Request position")
+        ax.set_ylabel("Order of execution")
 
-        plt.ylim([0, len(values) - 1])
-        plt.yticks([])
+        ax.set_ylim([0, len(values) - 1])
+        ax.set_yticks([])
     plt.tight_layout()
     plt.show()
 
 
 if __name__ == '__main__':
-    requests = [Request(98), Request(183), Request(37), Request(122), Request(14), Request(124), Request(65),
-                Request(67)]
+    # requests = [Request(98), Request(183), Request(37), Request(122), Request(14), Request(124), Request(65),
+    #             Request(67)]
+    #
+    # diskScheduler1 = DiskScheduler(200, requests.copy(), 53)
+    # print(f'Number of head movements: {diskScheduler1.fcfs()}')
+    #
+    # diskScheduler2 = DiskScheduler(200, requests.copy(), 53)
+    # print(f'Number of head movements: {diskScheduler2.sstf()}')
+    #
+    # diskScheduler3 = DiskScheduler(200, requests.copy(), 53)
+    # print(f'Number of head movements: {diskScheduler3.scan()}')
+    #
+    # diskScheduler4 = DiskScheduler(200, requests.copy(), 53)
+    # print(f'Number of head movements: {diskScheduler4.cscan()}')
+    #
+    # plot_values(*[disk.executed_positions for disk in (diskScheduler1, diskScheduler2, diskScheduler3, diskScheduler4)])
 
-    diskScheduler1 = DiskScheduler(200, requests.copy(), 53)
-    print(f'Number of head movements: {diskScheduler1.fcfs()}')
+    time_limit = 900
+    request_number_with_arrival_time = 100
+    request_number_initial = 10
+    max_arrival_time = 800
+    disk_size = 200
+    initial_head_position = 124
+    reqGenerator = RequestGenerator(request_number_with_arrival_time, max_arrival_time, disk_size)
+    request_list = [Request(position) for position in
+                    reqGenerator.generate_uniform_positions()[:request_number_initial]] + reqGenerator.get_requests(
+        time_type="uniform")
+    print([r.position for r in request_list])
+    # pprint(sorted(request_list, key=lambda x: x.arrival_time))
 
-    diskScheduler2 = DiskScheduler(200, requests.copy(), 53)
-    print(f'Number of head movements: {diskScheduler2.sstf()}')
+    adjust_seaborn("white")
 
-    diskScheduler3 = DiskScheduler(200, requests.copy(), 53)
-    print(f'Number of head movements: {diskScheduler3.scan()}')
+    plt.title("Time arrival of processes generated with normal distribution with standard deviation of 350")
+    plt.hist(reqGenerator.generate_std_times().reshape((request_number_with_arrival_time, 1)))
+    plt.show()
 
-    diskScheduler4 = DiskScheduler(200, requests.copy(), 53)
-    print(f'Number of head movements: {diskScheduler4.cscan()}')
+    plt.title("Time arrival of processes generated with uniform distribution")
+    plt.hist(reqGenerator.generate_uniform_times().reshape((request_number_with_arrival_time, 1)), color='r')
+    plt.show()
 
-    plot_values(*[disk.executed_positions for disk in (diskScheduler1, diskScheduler2, diskScheduler3, diskScheduler4)])
+    diskScheduler1_1 = DiskScheduler(disk_size, request_list.copy(), initial_head_position, time_limit=time_limit)
+    print(f'FCFS number of head movements: {diskScheduler1_1.fcfs()}')
+    print(f'Number of executed requests: {len(diskScheduler1_1.finished_requests)}\n')
+
+    diskScheduler2_1 = DiskScheduler(disk_size, request_list.copy(), initial_head_position, time_limit=time_limit)
+    print(f'SSTF number of head movements: {diskScheduler2_1.sstf()}')
+    print(f'Number of executed requests: {len(diskScheduler2_1.finished_requests)}\n')
+
+    diskScheduler3_1 = DiskScheduler(disk_size, request_list.copy(), initial_head_position, time_limit=time_limit)
+    print(f'SCAN number of head movements: {diskScheduler3_1.scan()}')
+    print(f'Number of executed requests: {len(diskScheduler3_1.finished_requests)}\n')
+
+    diskScheduler4_1 = DiskScheduler(disk_size, request_list.copy(), initial_head_position, time_limit=time_limit)
+    print(f'C-SCAN number of head movements: {diskScheduler4_1.cscan()}')
+    print(f'Number of executed requests: {len(diskScheduler4_1.finished_requests)}\n')
+
+    plot_values(
+        *[disk.visited_positions for disk in (diskScheduler1_1, diskScheduler2_1, diskScheduler3_1, diskScheduler4_1)])
+    plt.show()
