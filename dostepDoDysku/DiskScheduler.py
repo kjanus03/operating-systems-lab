@@ -10,11 +10,11 @@ class DiskScheduler():
         self.head_position = head_position
         self.time_limit = time_limit
         self.head_movements = 0
-        self.visited_positions = [head_position]
-        self.finished_requests = []
+        self.request_count = 0
+        self.finished_requests = [Request(head_position)]
 
     def finish_request(self, req: Request):
-        self.visited_positions.append(req.position)
+        self.request_count += 1
         self.finished_requests.append(req)
 
     def fcfs(self) -> int:
@@ -49,7 +49,6 @@ class DiskScheduler():
                 self.finish_request(curr_request)
         return last_request
 
-
     def scan(self):
         direction = 'l'
         requests_to_do = sorted([req for req in self.requests if req.position < self.head_position],
@@ -59,18 +58,18 @@ class DiskScheduler():
             if self.requests:
                 if direction == 'l':
                     self.head_position = 0
-                    self.visited_positions.append(self.head_position)
+                    self.finished_requests.append(Request(self.head_position))
                     self.head_movements += abs(last_request.position - self.head_position)
                     requests_to_do = sorted([req for req in self.requests if req.position >= self.head_position],
                                             key=lambda x: x.position)
-                    direction='r'
+                    direction = 'r'
                 elif direction == 'r':
                     self.head_position = self.disk_size
-                    self.visited_positions.append(self.head_position)
+                    self.finished_requests.append(Request(self.head_position))
                     self.head_movements += abs(last_request.position - self.head_position)
                     requests_to_do = sorted([req for req in self.requests if req.position < self.head_position],
                                             key=lambda x: x.position, reverse=True)
-                    direction='l'
+                    direction = 'l'
         return self.head_movements
 
     def cscan(self):
@@ -78,9 +77,9 @@ class DiskScheduler():
             right_requests = sorted([req for req in self.requests if req.position >= self.head_position])
             last_request = self.traverser_requests(right_requests)
             if self.requests:
-                self.visited_positions.append(self.disk_size)
+                self.finished_requests.append(Request(self.disk_size))
                 self.head_movements += (self.disk_size - last_request.position) - 1
                 self.head_position = 0
                 self.head_movements += self.disk_size
-                self.visited_positions.append(self.head_position)
+                self.finished_requests.append(Request(0))
         return self.head_movements
