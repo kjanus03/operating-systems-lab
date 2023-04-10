@@ -9,12 +9,12 @@ from Request import Request
 from RequestGenerator import RequestGenerator
 
 
-def adjust_seaborn(style: str):
+def adjust_seaborn(style: str) -> None:
     sns.set_style(style)
     sns.color_palette("pastel")
 
 
-def plot_values(*request_lists: List[Request]):
+def plot_values(*request_lists: List[Request]) -> None:
     plot_names = ["FCFS", "SSTF", "SCAN", "C-SCAN"]
     plt.figure(figsize=(16, 12))
     for i, values in enumerate(request_lists):

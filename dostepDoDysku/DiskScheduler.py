@@ -13,7 +13,7 @@ class DiskScheduler():
         self.request_count = 0
         self.finished_requests = [Request(head_position)]
 
-    def finish_request(self, req: Request):
+    def finish_request(self, req: Request) -> None:
         self.request_count += 1
         self.finished_requests.append(req)
 
@@ -26,7 +26,7 @@ class DiskScheduler():
             self.finish_request(curr_request)
         return self.head_movements
 
-    def sstf(self):
+    def sstf(self) -> int:
         original_requests = self.requests.copy()
         self.requests.sort(key=lambda x: abs(x.position - self.head_position))
         while self.head_movements < self.time_limit and self.requests:
@@ -49,7 +49,7 @@ class DiskScheduler():
                 self.finish_request(curr_request)
         return last_request
 
-    def scan(self):
+    def scan(self) -> int:
         direction = 'l'
         requests_to_do = sorted([req for req in self.requests if req.position < self.head_position],
                                 key=lambda x: x.position, reverse=True)
@@ -72,7 +72,7 @@ class DiskScheduler():
                     direction = 'l'
         return self.head_movements
 
-    def cscan(self):
+    def cscan(self) -> int:
         while self.head_movements < self.time_limit and self.requests:
             right_requests = sorted([req for req in self.requests if req.position >= self.head_position])
             last_request = self.traverser_requests(right_requests)
