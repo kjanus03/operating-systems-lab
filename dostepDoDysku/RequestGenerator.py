@@ -27,7 +27,7 @@ class RequestGenerator:
         return [Request(position,time) for position, time in zip(positions, times)]
 
     # Functions to generate arrival_times of requests
-    def generate_std_times(self, std_dev: int = 350) -> List[int]:
+    def generate_std_times(self, std_dev: int = 280) -> npt.NDArray[np.int_]:
         lower_bound = 0
         upper_bound = self.max_arrival_time
         mean = self.max_arrival_time // 2
