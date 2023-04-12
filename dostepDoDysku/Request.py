@@ -3,6 +3,7 @@ class Request:
         self.position = position
         self.arrival_time = arrival_time
         self.real_time = real_time
+        self.wait_time = 0
 
     def __eq__(self, other):
         return self.position == other.position and self.arrival_time == other.arrival_time and\

@@ -1,5 +1,5 @@
 from typing import List
-
+import numpy as np
 from Request import Request
 
 
@@ -15,6 +15,7 @@ class DiskScheduler():
 
     def finish_request(self, req: Request) -> None:
         self.request_count += 1
+        req.wait_time = self.head_movements - req.arrival_time
         self.finished_requests.append(req)
 
     def fcfs(self) -> int:
@@ -80,6 +81,11 @@ class DiskScheduler():
                 self.finished_requests.append(Request(self.disk_size))
                 self.head_movements += (self.disk_size - last_request.position) - 1
                 self.head_position = 0
-                self.head_movements += self.disk_size
                 self.finished_requests.append(Request(0))
         return self.head_movements
+
+    def moves_per_request(self) -> float:
+        return self.head_movements/self.request_count
+
+    def mean_wait_time(self) -> float:
+        return float(np.mean([req.wait_time for req in self.finished_requests]))
