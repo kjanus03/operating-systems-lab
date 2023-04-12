@@ -3,6 +3,7 @@ from copy import deepcopy
 from typing import List
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -11,7 +12,8 @@ from Request import Request
 from RequestGenerator import RequestGenerator
 
 
-def adjust_seaborn(style: str) -> None:
+def adjust_seaborn(palette: str, style: str) -> None:
+    sns.set_palette(palette)
     sns.set_style(style)
 
 
@@ -26,10 +28,19 @@ def turn_dss_to_req_dfs(*schedulers: DiskScheduler) -> List[pd.DataFrame]:
     return dfs
 
 
+def resize_plot(title: str) -> None:
+    plt.figure(figsize=(12, 8))
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.title(title, fontsize=20)
+
+
+alg_names = ["FCFS", "SSTF", "SCAN", "C-SCAN"]
+
+
 def main_plot(*request_lists: List[pd.DataFrame], request_count: int, time_limit: int, disk_size: int,
               max_arrival_time: int) -> None:
-    warnings.simplefilter(action='ignore', category=FutureWarning)
-    plot_names = ["FCFS", "SSTF", "SCAN", "C-SCAN"]
+
     fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(26, 18), )
     fig.suptitle(
         f'Disk scheduling simulation: {request_count} requests; {disk_size} disk size; '
@@ -56,7 +67,7 @@ def main_plot(*request_lists: List[pd.DataFrame], request_count: int, time_limit
             line_y = [j + 1, j + 1 + dy]
             ax.plot(line_x, line_y, color='black', linewidth=1)
 
-        ax.set_title(plot_names[i], fontsize=30)
+        ax.set_title(alg_names[i], fontsize=30)
         ax.set_xlabel("Request position", fontsize=22)
         ax.set_ylabel("Order of execution", fontsize=22)
         ax.tick_params(labelsize=20)
@@ -93,26 +104,26 @@ def example() -> None:
 
 
 def main() -> None:
-    time_limit = 13_000
-    request_number_with_arrival_time = 800
-    request_number_initial = 200
-    max_arrival_time = 6500
-    disk_size = 1400
-    initial_head_position = 420
+    time_limit = 1500
+    request_number_with_arrival_time = 600
+    request_number_initial = 100
+    max_arrival_time = 1300
+    disk_size = 200
+    initial_head_position = 112
     reqGenerator = RequestGenerator(request_number_with_arrival_time, max_arrival_time, disk_size)
     request_list = [Request(position) for position in
                     reqGenerator.generate_uniform_positions()[:request_number_initial]] + reqGenerator.get_requests(
         time_type="uniform")
 
     # pprint(sorted(request_list, key=lambda x: x.arrival_time))
-    adjust_seaborn("white")
+    adjust_seaborn("viridis", "white")
 
-    plt.title("Time arrival of processes generated with normal distribution, std=350")
-    plt.hist(reqGenerator.generate_std_times().reshape((request_number_with_arrival_time, 1)))
+    resize_plot("Time arrival of processes generated with normal distribution, std=350")
+    sns.histplot(reqGenerator.generate_std_times().reshape((request_number_with_arrival_time, 1)), legend=False)
     plt.show()
 
-    plt.title("Time arrival of processes generated with uniform distribution")
-    plt.hist(reqGenerator.generate_uniform_times().reshape((request_number_with_arrival_time, 1)), color='r')
+    resize_plot("Time arrival of processes generated with uniform distribution")
+    sns.histplot(reqGenerator.generate_uniform_times().reshape((request_number_with_arrival_time, 1)), legend=False)
     plt.show()
 
     diskScheduler1_1 = DiskScheduler(disk_size, deepcopy(request_list), initial_head_position, time_limit=time_limit)
@@ -141,6 +152,12 @@ def main() -> None:
 
     df1_1, df2_1, df3_1, df4_1 = turn_dss_to_req_dfs(diskScheduler1_1, diskScheduler2_1, diskScheduler3_1,
                                                      diskScheduler4_1)
+
+    wait_times = {"labels": alg_names,
+                  "mean_wait_time": [np.mean(df['wait_time']) for df in (df1_1, df2_1, df3_1, df4_1)]}
+    resize_plot("Mean algorithm wait time for a request execution")
+    sns.barplot(x="labels", y="mean_wait_time", data=wait_times)
+    plt.show()
 
     main_plot(
         *[finished_req_df for finished_req_df in (df1_1, df2_1, df3_1, df4_1)],
