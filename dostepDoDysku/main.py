@@ -1,4 +1,3 @@
-import warnings
 from copy import deepcopy
 from typing import List
 
@@ -40,8 +39,11 @@ alg_names = ["FCFS", "SSTF", "SCAN", "C-SCAN"]
 
 def main_plot(*request_lists: List[pd.DataFrame], request_count: int, time_limit: int, disk_size: int,
               max_arrival_time: int) -> None:
-
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(26, 18), )
+    nrows, ncols = 2, 2
+    if(len(request_lists) == 2):
+        nrows = 2
+        ncols = 1
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(26, 18), )
     fig.suptitle(
         f'Disk scheduling simulation: {request_count} requests; {disk_size} disk size; '
         f'{max_arrival_time} max arrival time; {time_limit} time limit\n', fontsize=34)
@@ -49,7 +51,9 @@ def main_plot(*request_lists: List[pd.DataFrame], request_count: int, time_limit
         positions: pd.Series = df['position']
         arrival_times: pd.Series = df['arrival_time']
         df["y_value"] = range(len(df) - 1, -1, -1)
-        ax = axes[i // 2, i % 2]
+        yy = [0,0,1,1]
+        xx= [0,1,0,1]
+        ax = axes[xx[i], yy[i]]
         # sns.scatterplot(positions, range(len(df) - 1, -1, -1), s=200, hue=arrival_times, legend=True, ax=ax)
         sns.scatterplot(x="position", y="y_value", data=df, s=210, hue="arrival_time", ax=ax, palette="viridis_r",
                         legend=False)
@@ -75,6 +79,40 @@ def main_plot(*request_lists: List[pd.DataFrame], request_count: int, time_limit
         ax.set_ylim([0, len(df) - 1])
         ax.set_yticks([])
     plt.tight_layout()
+    plt.show()
+
+
+def facet_plot(df: pd.DataFrame) -> None:
+    sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
+    plt.figure(figsize=(8, 6))
+    # Initialize the FacetGrid object
+    g = sns.FacetGrid(df, row="Label", hue="Label", aspect=7, height=2, palette="viridis_r")
+
+    # Draw the densities in a few steps
+    g.map(sns.kdeplot, "wait_time",
+          bw_adjust=.5, clip_on=False,
+          fill=True, alpha=1, linewidth=1.5)
+    g.map(sns.kdeplot, "wait_time", clip_on=False, color="w", lw=2, bw_adjust=.5)
+
+    # passing color=None to refline() uses the hue mapping
+    g.refline(y=0, linewidth=2, linestyle="-", color=None, clip_on=False)
+
+    # Define and use a simple function to label the plot in axes coordinates
+    def label(x, color, label):
+        ax = plt.gca()
+        ax.text(0, .2, label, fontweight="bold", color=color,
+                ha="left", va="center", transform=ax.transAxes)
+
+    g.map(label, "wait_time")
+
+    # Set the subplots to overlap
+    g.figure.subplots_adjust(hspace=-.30)
+
+    # Remove axes details that don't play well with overlap
+    g.set_titles("")
+    g.set(yticks=[], ylabel="")
+    g.despine(bottom=True, left=True)
+    plt.suptitle("Wait time density distribution", fontsize=28)
     plt.show()
 
 
@@ -104,16 +142,21 @@ def example() -> None:
 
 
 def main() -> None:
-    time_limit = 1500
-    request_number_with_arrival_time = 600
-    request_number_initial = 100
-    max_arrival_time = 1300
-    disk_size = 200
-    initial_head_position = 112
+    time_limit = 10_000
+    request_number_with_arrival_time = 1000
+    request_number_initial = 280
+    max_arrival_time = 9800
+    disk_size = 400
+    initial_head_position = 24
     reqGenerator = RequestGenerator(request_number_with_arrival_time, max_arrival_time, disk_size)
     request_list = [Request(position) for position in
                     reqGenerator.generate_uniform_positions()[:request_number_initial]] + reqGenerator.get_requests(
         time_type="uniform")
+    request_list_deadlines = [Request(position) for position in
+                    reqGenerator.generate_uniform_positions()[:request_number_initial]] + reqGenerator.get_requests(
+        time_type="normal")
+    request_list_deadlines=reqGenerator.generate_deadlines_for_requests(request_list_deadlines)
+    print(request_list_deadlines)
 
     # pprint(sorted(request_list, key=lambda x: x.arrival_time))
     adjust_seaborn("viridis", "white")
@@ -133,7 +176,7 @@ def main() -> None:
     print(f'Mean wait time of a request: {diskScheduler1_1.mean_wait_time()}\n')
 
     diskScheduler2_1 = DiskScheduler(disk_size, deepcopy(request_list), initial_head_position, time_limit=time_limit)
-    print(f'SSTF number of head movements: {diskScheduler2_1.sstf()}')
+    print(f'SSTF EDF number of head movements: {diskScheduler2_1.sstf()}')
     print(f'Number of executed requests: {diskScheduler2_1.request_count}')
     print(f'Mean number of moves per request: {diskScheduler2_1.moves_per_request()}')
     print(f'Mean wait time of a request: {diskScheduler2_1.mean_wait_time()}\n')
@@ -150,14 +193,36 @@ def main() -> None:
     print(f'Mean number of moves per request: {diskScheduler4_1.moves_per_request()}')
     print(f'Mean wait time of a request: {diskScheduler4_1.mean_wait_time()}\n')
 
+    diskScheduler5_1 = DiskScheduler(disk_size, deepcopy(request_list_deadlines), initial_head_position, time_limit=time_limit)
+    print(f'C-SCAN number of head movements: {diskScheduler5_1.sstf_edf()}')
+    print(f'Number of executed requests: {diskScheduler5_1.request_count}')
+    print(f'Mean number of moves per request: {diskScheduler5_1.moves_per_request()}')
+    print(f'Mean wait time of a request: {diskScheduler5_1.mean_wait_time()}\n')
+
     df1_1, df2_1, df3_1, df4_1 = turn_dss_to_req_dfs(diskScheduler1_1, diskScheduler2_1, diskScheduler3_1,
                                                      diskScheduler4_1)
+    df5_1 = turn_dss_to_req_dfs(diskScheduler5_1)
+    print(df5_1)
 
     wait_times = {"labels": alg_names,
                   "mean_wait_time": [np.mean(df['wait_time']) for df in (df1_1, df2_1, df3_1, df4_1)]}
     resize_plot("Mean algorithm wait time for a request execution")
     sns.barplot(x="labels", y="mean_wait_time", data=wait_times)
     plt.show()
+
+    merged_df1 = pd.concat([df1_1.assign(Label=alg_names[0]),
+                            df2_1.assign(Label=alg_names[1]),
+                            df3_1.assign(Label=alg_names[2]),
+                            df4_1.assign(Label=alg_names[3])])
+    merged_df1 = merged_df1[merged_df1['wait_time'] < 0.45 * max(merged_df1['wait_time'])]
+    facet_plot(merged_df1)
+
+    merged_df2 = pd.concat([
+        df2_1.assign(Label=alg_names[1]),
+        df3_1.assign(Label=alg_names[2]),
+        df4_1.assign(Label=alg_names[3])])
+    merged_df2 = merged_df2[merged_df2['wait_time'] < 0.65 * max(merged_df2['wait_time'])]
+    facet_plot(merged_df2)
 
     main_plot(
         *[finished_req_df for finished_req_df in (df1_1, df2_1, df3_1, df4_1)],

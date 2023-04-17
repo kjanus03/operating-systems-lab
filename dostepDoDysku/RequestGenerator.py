@@ -40,3 +40,10 @@ class RequestGenerator:
 
     def generate_uniform_positions(self) -> npt.NDArray[np.int_]:
         return np.random.uniform(1, self.disk_size, self.number).astype(int)
+
+    # Function to generate deadlines for the requests (one in 10 requests shuld have a non-zero deadline)
+    def generate_deadlines_for_requests(self, requests: List[Request]) -> List[Request]:
+        for request in requests:
+            if np.random.uniform(0,1) < 0.1:
+                request.deadline = int(np.random.uniform(1, self.disk_size)//3)
+        return requests
