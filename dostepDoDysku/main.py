@@ -20,8 +20,10 @@ def turn_dss_to_req_dfs(*schedulers: DiskScheduler) -> List[pd.DataFrame]:
     """Turns disk scheduler objects to pandas DataFrames of finished requests"""
     dfs = []
     for ds in schedulers:
-        data = [{"position": r.position, "arrival_time": r.arrival_time, "wait_time": r.wait_time} for r in
-                ds.finished_requests]
+        data = [
+            {"position": r.position, "arrival_time": r.arrival_time, "wait_time": r.wait_time, "deadline": r.deadline}
+            for r in
+            ds.finished_requests]
         df = pd.DataFrame(data)
         dfs.append(df)
     return dfs
@@ -40,7 +42,7 @@ alg_names = ["FCFS", "SSTF", "SCAN", "C-SCAN"]
 def main_plot(*request_lists: List[pd.DataFrame], request_count: int, time_limit: int, disk_size: int,
               max_arrival_time: int) -> None:
     nrows, ncols = 2, 2
-    if(len(request_lists) == 2):
+    if (len(request_lists) == 2):
         nrows = 2
         ncols = 1
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(26, 18), )
@@ -48,11 +50,12 @@ def main_plot(*request_lists: List[pd.DataFrame], request_count: int, time_limit
         f'Disk scheduling simulation: {request_count} requests; {disk_size} disk size; '
         f'{max_arrival_time} max arrival time; {time_limit} time limit\n', fontsize=34)
     for i, df in enumerate(request_lists):
+        df = request_lists[i]
         positions: pd.Series = df['position']
         arrival_times: pd.Series = df['arrival_time']
         df["y_value"] = range(len(df) - 1, -1, -1)
-        yy = [0,0,1,1]
-        xx= [0,1,0,1]
+        yy = [0, 0, 1, 1]
+        xx = [0, 1, 0, 1]
         ax = axes[xx[i], yy[i]]
         # sns.scatterplot(positions, range(len(df) - 1, -1, -1), s=200, hue=arrival_times, legend=True, ax=ax)
         sns.scatterplot(x="position", y="y_value", data=df, s=210, hue="arrival_time", ax=ax, palette="viridis_r",
@@ -63,6 +66,7 @@ def main_plot(*request_lists: List[pd.DataFrame], request_count: int, time_limit
         colorbar = fig.colorbar(sm, ax=ax)
         colorbar.set_label("arrival_time", fontsize=20)
         colorbar.ax.tick_params(labelsize=18)
+        colorbar.ax.invert_yaxis()
 
         for j in range(len(df) - 1):
             ind = abs(len(df) - j) - 2
@@ -72,6 +76,57 @@ def main_plot(*request_lists: List[pd.DataFrame], request_count: int, time_limit
             ax.plot(line_x, line_y, color='black', linewidth=1)
 
         ax.set_title(alg_names[i], fontsize=30)
+        ax.set_xlabel("Request position", fontsize=22)
+        ax.set_ylabel("Order of execution", fontsize=22)
+        ax.tick_params(labelsize=20)
+
+        ax.set_ylim([0, len(df) - 1])
+        ax.set_yticks([])
+    plt.tight_layout()
+    plt.show()
+
+
+def deadline_plot(*request_lists: List[pd.DataFrame], request_count: int, time_limit: int, disk_size: int,
+                  max_arrival_time: int, missed_deadlines: List[Request]) -> None:
+    alg_names2 = ["SSTF_EDF", "SSTF_FD_SCAN"]
+    nrows, ncols = 1, 2
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(26, 18), )
+    fig.suptitle(
+        f'Disk scheduling deadlines simulation: {request_count} requests; {disk_size} disk size; '
+        f'{max_arrival_time} max arrival time;\n {time_limit} time limit; 5% deadline probability\n', fontsize=34)
+    for i, df in enumerate(request_lists):
+        df = request_lists[i]
+        positions: pd.Series = df['position']
+        arrival_times: pd.Series = df['arrival_time']
+        df["y_value"] = range(len(df) - 1, -1, -1)
+        xx = [0, 1, 0, 1]
+        ax = axes[xx[i]]
+        df1 = df[df['deadline'] == 0]
+        df2 = df[df['deadline'] > 0]
+        # sns.scatterplot(positions, range(len(df) - 1, -1, -1), s=200, hue=arrival_times, legend=True, ax=ax)
+
+        sns.scatterplot(x="position", y="y_value", data=df1, s=210, hue="arrival_time", ax=ax, palette="Blues",
+                        legend=False, edgecolor='black', linewidth=1)
+
+        sns.scatterplot(x="position", y="y_value", data=df2, s=210, ax=ax, color='r', legend=False, edgecolor='black',
+                        linewidth=0.5)
+
+        norm = plt.Normalize(arrival_times.min(), arrival_times.max())
+        sm = plt.cm.ScalarMappable(cmap="Blues", norm=norm)
+        sm.set_array([])
+        colorbar = fig.colorbar(sm, ax=ax)
+        colorbar.set_label("arrival_time", fontsize=20)
+        colorbar.ax.tick_params(labelsize=18)
+        colorbar.ax.invert_yaxis()
+
+        for j in range(len(df) - 1):
+            ind = abs(len(df) - j) - 2
+            dy = -1  # adjust this value to set the vertical distance of the line
+            line_x = [positions[ind], positions[ind + 1]]
+            line_y = [j + 1, j + 1 + dy]
+            ax.plot(line_x, line_y, color='black', linewidth=1)
+
+        ax.set_title(alg_names2[i], fontsize=30)
         ax.set_xlabel("Request position", fontsize=22)
         ax.set_ylabel("Order of execution", fontsize=22)
         ax.tick_params(labelsize=20)
@@ -143,20 +198,20 @@ def example() -> None:
 
 def main() -> None:
     time_limit = 10_000
-    request_number_with_arrival_time = 1000
-    request_number_initial = 280
-    max_arrival_time = 9800
-    disk_size = 400
-    initial_head_position = 24
+    request_number_with_arrival_time = 800
+    request_number_initial = 200
+    max_arrival_time = 10_000
+    disk_size = 500
+    initial_head_position = 250
     reqGenerator = RequestGenerator(request_number_with_arrival_time, max_arrival_time, disk_size)
     request_list = [Request(position) for position in
                     reqGenerator.generate_uniform_positions()[:request_number_initial]] + reqGenerator.get_requests(
         time_type="uniform")
     request_list_deadlines = [Request(position) for position in
-                    reqGenerator.generate_uniform_positions()[:request_number_initial]] + reqGenerator.get_requests(
+                              reqGenerator.generate_uniform_positions()[
+                              :request_number_initial]] + reqGenerator.get_requests(
         time_type="normal")
-    request_list_deadlines=reqGenerator.generate_deadlines_for_requests(request_list_deadlines)
-    print(request_list_deadlines)
+    request_list_deadlines = reqGenerator.generate_deadlines_for_requests(request_list_deadlines)
 
     # pprint(sorted(request_list, key=lambda x: x.arrival_time))
     adjust_seaborn("viridis", "white")
@@ -176,33 +231,47 @@ def main() -> None:
     print(f'Mean wait time of a request: {diskScheduler1_1.mean_wait_time()}\n')
 
     diskScheduler2_1 = DiskScheduler(disk_size, deepcopy(request_list), initial_head_position, time_limit=time_limit)
-    print(f'SSTF EDF number of head movements: {diskScheduler2_1.sstf()}')
+    print(f'SSTF number of head movements: {diskScheduler2_1.sstf()}')
     print(f'Number of executed requests: {diskScheduler2_1.request_count}')
     print(f'Mean number of moves per request: {diskScheduler2_1.moves_per_request()}')
     print(f'Mean wait time of a request: {diskScheduler2_1.mean_wait_time()}\n')
 
-    diskScheduler3_1 = DiskScheduler(disk_size, deepcopy(request_list), initial_head_position, time_limit=time_limit)
+
+    time_limit2 = 15000
+    diskScheduler3_1 = DiskScheduler(disk_size, deepcopy(request_list), initial_head_position, time_limit=time_limit2)
     print(f'SCAN number of head movements: {diskScheduler3_1.scan()}')
     print(f'Number of executed requests: {diskScheduler3_1.request_count}')
     print(f'Mean number of moves per request: {diskScheduler3_1.moves_per_request()}')
     print(f'Mean wait time of a request: {diskScheduler3_1.mean_wait_time()}\n')
 
-    diskScheduler4_1 = DiskScheduler(disk_size, deepcopy(request_list), initial_head_position, time_limit=time_limit)
+    diskScheduler4_1 = DiskScheduler(disk_size, deepcopy(request_list), initial_head_position, time_limit=time_limit2)
     print(f'C-SCAN number of head movements: {diskScheduler4_1.cscan()}')
     print(f'Number of executed requests: {diskScheduler4_1.request_count}')
     print(f'Mean number of moves per request: {diskScheduler4_1.moves_per_request()}')
     print(f'Mean wait time of a request: {diskScheduler4_1.mean_wait_time()}\n')
 
-    diskScheduler5_1 = DiskScheduler(disk_size, deepcopy(request_list_deadlines), initial_head_position, time_limit=time_limit)
-    print(f'C-SCAN number of head movements: {diskScheduler5_1.sstf_edf()}')
+    diskScheduler5_1 = DiskScheduler(disk_size, deepcopy(request_list_deadlines), initial_head_position,
+                                     time_limit=time_limit)
+    print(len(request_list_deadlines))
+    print(f'SSTF-EDF number of head movements: {diskScheduler5_1.sstf_edf()}')
     print(f'Number of executed requests: {diskScheduler5_1.request_count}')
+    print(f'Number of executed deadline requests: {diskScheduler5_1.finished_deadline_requests()}')
+    print(f'Number of missed deadline requests: {diskScheduler5_1.missed_deadline_requests()}')
     print(f'Mean number of moves per request: {diskScheduler5_1.moves_per_request()}')
     print(f'Mean wait time of a request: {diskScheduler5_1.mean_wait_time()}\n')
 
+    diskScheduler6_1 = DiskScheduler(disk_size, deepcopy(request_list_deadlines), initial_head_position,
+                                     time_limit=time_limit)
+    print(f'SSTF-FD-SCAN number of head movements: {diskScheduler6_1.sstf_fd_scan()}')
+    print(f'Number of executed requests: {diskScheduler6_1.request_count}')
+    print(f'Number of executed deadline requests: {diskScheduler6_1.finished_deadline_requests()}')
+    print(f'Number of missed deadline requests: {diskScheduler6_1.missed_deadline_requests()}')
+    print(f'Mean number of moves per request: {diskScheduler6_1.moves_per_request()}')
+    print(f'Mean wait time of a request: {diskScheduler6_1.mean_wait_time()}\n')
+
     df1_1, df2_1, df3_1, df4_1 = turn_dss_to_req_dfs(diskScheduler1_1, diskScheduler2_1, diskScheduler3_1,
                                                      diskScheduler4_1)
-    df5_1 = turn_dss_to_req_dfs(diskScheduler5_1)
-    print(df5_1)
+    df5_1, df6_1 = turn_dss_to_req_dfs(diskScheduler5_1, diskScheduler6_1)
 
     wait_times = {"labels": alg_names,
                   "mean_wait_time": [np.mean(df['wait_time']) for df in (df1_1, df2_1, df3_1, df4_1)]}
@@ -214,14 +283,14 @@ def main() -> None:
                             df2_1.assign(Label=alg_names[1]),
                             df3_1.assign(Label=alg_names[2]),
                             df4_1.assign(Label=alg_names[3])])
-    merged_df1 = merged_df1[merged_df1['wait_time'] < 0.45 * max(merged_df1['wait_time'])]
+    merged_df1 = merged_df1[merged_df1['wait_time'] < 0.95 * max(merged_df1['wait_time'])]
     facet_plot(merged_df1)
 
     merged_df2 = pd.concat([
         df2_1.assign(Label=alg_names[1]),
         df3_1.assign(Label=alg_names[2]),
         df4_1.assign(Label=alg_names[3])])
-    merged_df2 = merged_df2[merged_df2['wait_time'] < 0.65 * max(merged_df2['wait_time'])]
+    merged_df2 = merged_df2[merged_df2['wait_time'] < 0.85 * max(merged_df2['wait_time'])]
     facet_plot(merged_df2)
 
     main_plot(
@@ -229,6 +298,11 @@ def main() -> None:
         request_count=request_number_initial + request_number_with_arrival_time, time_limit=time_limit,
         disk_size=disk_size, max_arrival_time=max_arrival_time,
     )
+    plt.show()
+
+    deadline_plot(df5_1, df6_1, request_count=request_number_initial + request_number_with_arrival_time,
+                  time_limit=time_limit, disk_size=disk_size, max_arrival_time=max_arrival_time,
+                  missed_deadlines=diskScheduler5_1.missed_requests)
 
     plt.show()
 

@@ -6,8 +6,7 @@ class Request:
         self.deadline = deadline
 
     def __eq__(self, other):
-        return self.position == other.position and self.arrival_time == other.arrival_time and\
-               self.deadline == other.deadline
+        return self.position == other.position and self.arrival_time == other.arrival_time and self.deadline == other.deadline
 
     def __lt__(self, other):
         return self.position < other.position
