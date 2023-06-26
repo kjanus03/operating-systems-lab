@@ -83,6 +83,7 @@ def main_plot(*request_lists: List[pd.DataFrame], request_count: int, time_limit
         ax.set_ylim([0, len(df) - 1])
         ax.set_yticks([])
     plt.tight_layout()
+    plt.savefig("plots/main_plot.png")
     plt.show()
 
 
@@ -134,6 +135,7 @@ def deadline_plot(*request_lists: List[pd.DataFrame], request_count: int, time_l
         ax.set_ylim([0, len(df) - 1])
         ax.set_yticks([])
     plt.tight_layout()
+    plt.savefig("plots/deadline_plot.png")
     plt.show()
 
 
@@ -168,6 +170,7 @@ def facet_plot(df: pd.DataFrame) -> None:
     g.set(yticks=[], ylabel="")
     g.despine(bottom=True, left=True)
     plt.suptitle("Wait time density distribution", fontsize=28)
+    plt.savefig("plots/wait_time_density.png")
     plt.show()
 
 
