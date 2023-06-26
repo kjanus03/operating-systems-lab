@@ -120,6 +120,7 @@ def main():
     plt.show()
 
     sns.boxplot(x="Algorytm", y='Czas_oczekiwania_na_rozpoczecie', data=df)
+    plt.savefig("boxplot_wait_time.png")
     plt.show()
 
     sns.pairplot(df, hue="Algorytm")

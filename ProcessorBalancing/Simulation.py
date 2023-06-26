@@ -33,6 +33,8 @@ class Simulation:
         sns.set_palette("viridis")
         num_cols = int(np.ceil(n_processors / 2))  # Calculate number of rows for subplots
         fig, axs = plt.subplots(2, num_cols, figsize=(6 * num_cols, 12))  # Create subplots
+        # main title
+        plt.suptitle(f"Share of GPU processing power for {n_processors} processors", fontsize=20)
 
         for i, p in enumerate(self.processor_list[:n_processors]):
             row = i % 2  # Calculate row index for subplot
@@ -46,6 +48,7 @@ class Simulation:
             ax.set_title(f"Processor {p.id}", fontsize=16)
 
         plt.tight_layout()  # Adjust spacing between subplots
+        plt.savefig(f"share_of_CPU_processing_power_{n_processors}_processors.png")
         plt.show()
 
     def approach1(self):
@@ -154,11 +157,13 @@ class Simulation:
         ax = df.plot.barh(x='processor_id', y=['started_own_requests', 'taken_migrations', 'migration_queries'], stacked = True, rot=1, figsize=(20, 10), color=['#1f77b4', '#ff7f0e', '#2ca02c'])
 
         # make all fonts larger
+        ax.set_title("Request interactions by CPU", fontsize=24)
         plt.setp(ax.get_xticklabels(), fontsize=16)
         plt.setp(ax.get_yticklabels(), fontsize=15)
         ax.set_xlabel("Number of requests", fontsize=24)
         ax.set_ylabel("Processor ID", fontsize=24)
         plt.tight_layout()
+        plt.savefig("request_interactions_by_cpu.png")
         plt.show()
 
     def visualize_processor_cpu_load_by_time(self, approach: int):

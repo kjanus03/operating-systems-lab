@@ -275,6 +275,7 @@ def visualize_faults(szamotania: list[list[int]]):
     plt.ylabel('Page Breaks', fontsize=26)
     plt.title('Szamotania', fontsize=40)
     plt.legend(prop = { "size": 28 }, loc='lower left', fontsize=26)
+    plt.savefig('szamotania.png')
     plt.show()
 
 

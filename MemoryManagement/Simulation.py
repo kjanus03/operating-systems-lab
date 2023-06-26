@@ -213,7 +213,8 @@ def main() -> None:
     for i in range(5):
         sns.lineplot(x=range(len(ref_chain)), y=page_faults_per_step_per_algorithm[i], ax=ax, linewidth=2)
     ax.legend(etiquetas)
-    plt.title("Page faults per step")
+    plt.title("Page faults per step", fontsize=20)
+    plt.savefig("page_faults_per_step.png")
     plt.show()
     plt.show()
 
